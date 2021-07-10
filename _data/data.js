@@ -213,9 +213,11 @@ const downloadImage = async function (url, file) {
   }
 
   const filename = `${file}${extension}`;
+  let hashCode = '';
   const path = Path.join(IMAGE_DIRECTORY, filename);
   const virtualPath = Path.join(IMAGE_PATH, filename);
 
+  // No longer hits any file since we use hash as file name
   if (FS.existsSync(path)) {
     // console.log(`Image already exists: ${path}`);
     console.timeEnd(label);
@@ -239,14 +241,25 @@ const downloadImage = async function (url, file) {
     });
 
     response.data.on('end', () => {
-      console.log(`Image received: ${path} (${hash.digest('hex')})`);
+      hashCode = hash.digest('hex');
+      console.log(`Image received: ${path} (${hashCode})`);
     });
     writer.on('finish', () => {
       console.timeEnd(label);
+      const hashFileName = `${hashCode}${extension}`;
+      const newPath = Path.join(IMAGE_DIRECTORY, hashFileName);
+      const newVirtualPath = Path.join(IMAGE_PATH, hashFileName);
+
+      FS.renameSync(`${path}`, `${newPath}`);
+
       console.log(`Image downloaded: ${path}`);
+      // resolve({
+      //   path,
+      //   virtualPath,
+      // });
       resolve({
-        path,
-        virtualPath,
+        path: newPath,
+        virtualPath: newVirtualPath,
       });
     });
 
